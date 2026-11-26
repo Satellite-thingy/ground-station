@@ -1,0 +1,33 @@
+name: Ground Station Release
+
+on:
+  push:
+    tags: ['v*']
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  package:
+    name: Package station software source
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out source
+        uses: actions/checkout@v4
+
+      - name: Create source archive and checksum
+        shell: bash
+        run: |
+          mkdir -p release
+          git archive --format=tar.gz --prefix=ground-station/ HEAD > "release/ground-station-${GITHUB_REF_NAME}.tar.gz"
+          cd release
+          sha256sum *.tar.gz > SHA256SUMS
+
+      - name: Upload station release artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: ground-station-${{ github.ref_name }}
+          path: release/
+          if-no-files-found: error
+          retention-days: 30
